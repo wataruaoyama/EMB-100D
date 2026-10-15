@@ -1,0 +1,230 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 2020  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and any partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel FPGA IP License Agreement, or other applicable license
+# agreement, including, without limitation, that your use is for
+# the sole purpose of programming logic devices manufactured by
+# Intel and sold by Intel or its authorized distributors.  Please
+# refer to the applicable agreement for further details, at
+# https://fpgasoftware.intel.com/eula.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus Prime
+# Version 20.1.1 Build 720 11/11/2020 SJ Lite Edition
+# Date created = 15:40:54  4月 16, 2024
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		ayme0110_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus Prime software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "MAX 10"
+set_global_assignment -name DEVICE 10M04SCE144C8G
+set_global_assignment -name TOP_LEVEL_ENTITY ayme0120
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 20.1.1
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "15:40:54  4月 16, 2024"
+set_global_assignment -name LAST_QUARTUS_VERSION "20.1.1 Lite Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_timing
+set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_symbol
+set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_signal_integrity
+set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_boundary_scan
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name FLOW_ENABLE_POWER_ANALYZER ON
+set_global_assignment -name POWER_DEFAULT_INPUT_IO_TOGGLE_RATE "12.5 %"
+set_location_assignment PIN_120 -to FREQ_SEL[3]
+set_location_assignment PIN_121 -to FREQ_SEL[2]
+set_location_assignment PIN_122 -to FREQ_SEL[1]
+set_location_assignment PIN_123 -to FREQ_SEL[0]
+set_location_assignment PIN_88 -to IBUF[7]
+set_location_assignment PIN_89 -to IBUF[6]
+set_location_assignment PIN_86 -to IBUF[5]
+set_location_assignment PIN_85 -to IBUF[4]
+set_location_assignment PIN_84 -to IBUF[3]
+set_location_assignment PIN_81 -to IBUF[2]
+set_location_assignment PIN_80 -to IBUF[1]
+set_location_assignment PIN_79 -to IBUF[0]
+set_location_assignment PIN_78 -to IBUF_FLG_LED
+set_location_assignment PIN_90 -to IBUF_STB
+set_location_assignment PIN_77 -to IBUFO[7]
+set_location_assignment PIN_76 -to IBUFO[6]
+set_location_assignment PIN_75 -to IBUFO[5]
+set_location_assignment PIN_74 -to IBUFO[4]
+set_location_assignment PIN_70 -to IBUFO[3]
+set_location_assignment PIN_69 -to IBUFO[2]
+set_location_assignment PIN_66 -to IBUFO[1]
+set_location_assignment PIN_65 -to IBUFO[0]
+set_location_assignment PIN_100 -to OBUF[7]
+set_location_assignment PIN_101 -to OBUF[6]
+set_location_assignment PIN_102 -to OBUF[5]
+set_location_assignment PIN_97 -to OBUF[4]
+set_location_assignment PIN_98 -to OBUF[3]
+set_location_assignment PIN_99 -to OBUF[2]
+set_location_assignment PIN_92 -to OBUF[1]
+set_location_assignment PIN_93 -to OBUF[0]
+set_location_assignment PIN_105 -to OBUF_FLG
+set_location_assignment PIN_106 -to OBUF_STB
+set_location_assignment PIN_134 -to OP_LED
+set_location_assignment PIN_124 -to PHASE_LED[4]
+set_location_assignment PIN_127 -to PHASE_LED[3]
+set_location_assignment PIN_130 -to PHASE_LED[2]
+set_location_assignment PIN_131 -to PHASE_LED[1]
+set_location_assignment PIN_132 -to PHASE_LED[0]
+set_location_assignment PIN_96 -to REQ_STB
+set_location_assignment PIN_87 -to REQ_STB_IN
+set_location_assignment PIN_52 -to SEG_O[6]
+set_location_assignment PIN_50 -to SEG_O[5]
+set_location_assignment PIN_47 -to SEG_O[4]
+set_location_assignment PIN_44 -to SEG_O[3]
+set_location_assignment PIN_45 -to SEG_O[2]
+set_location_assignment PIN_48 -to SEG_O[1]
+set_location_assignment PIN_46 -to SEG_O[0]
+set_location_assignment PIN_54 -to SEL_DIGIT[4]
+set_location_assignment PIN_55 -to SEL_DIGIT[3]
+set_location_assignment PIN_56 -to SEL_DIGIT[2]
+set_location_assignment PIN_57 -to SEL_DIGIT[1]
+set_location_assignment PIN_58 -to SEL_DIGIT[0]
+set_location_assignment PIN_64 -to SW_IN[18]
+set_location_assignment PIN_39 -to SW_IN[17]
+set_location_assignment PIN_43 -to SW_IN[16]
+set_location_assignment PIN_41 -to SW_IN[15]
+set_location_assignment PIN_141 -to SW_IN[14]
+set_location_assignment PIN_140 -to SW_IN[13]
+set_location_assignment PIN_135 -to SW_IN[12]
+set_location_assignment PIN_7 -to SW_IN[11]
+set_location_assignment PIN_8 -to SW_IN[10]
+set_location_assignment PIN_10 -to SW_IN[9]
+set_location_assignment PIN_11 -to SW_IN[8]
+set_location_assignment PIN_12 -to SW_IN[7]
+set_location_assignment PIN_13 -to SW_IN[6]
+set_location_assignment PIN_14 -to SW_IN[5]
+set_location_assignment PIN_17 -to SW_IN[4]
+set_location_assignment PIN_21 -to SW_IN[3]
+set_location_assignment PIN_22 -to SW_IN[2]
+set_location_assignment PIN_24 -to SW_IN[1]
+set_location_assignment PIN_25 -to SW_IN[0]
+set_location_assignment PIN_26 -to SYSCLK
+set_location_assignment PIN_6 -to XRESET
+set_global_assignment -name VHDL_FILE src/ayme0120_test.vhd
+set_global_assignment -name VHDL_FILE src/exe_ctrl_test.vhd
+set_global_assignment -name VHDL_FILE src/usr_reg.vhd
+set_global_assignment -name VHDL_FILE src/synchro.vhd
+set_global_assignment -name VHDL_FILE src/shifter.vhd
+set_global_assignment -name VHDL_FILE src/seven_segdec.vhd
+set_global_assignment -name VHDL_FILE src/prog_ram.vhd
+set_global_assignment -name VHDL_FILE src/mem_ctrl.vhd
+set_global_assignment -name VHDL_FILE src/mcu_control_test.vhd
+set_global_assignment -name VHDL_FILE src/mcu.vhd
+set_global_assignment -name VHDL_FILE src/iobuf.vhd
+set_global_assignment -name VHDL_FILE src/instrDc.vhd
+set_global_assignment -name VHDL_FILE src/inst_reg.vhd
+set_global_assignment -name VHDL_FILE src/flag_reg.vhd
+set_global_assignment -name VHDL_FILE src/fetch.vhd
+set_global_assignment -name VHDL_FILE src/exe_ctrl.vhd
+set_global_assignment -name VHDL_FILE src/display_reg.vhd
+set_global_assignment -name VHDL_FILE src/data_ram.vhd
+set_global_assignment -name VHDL_FILE src/control.vhd
+set_global_assignment -name VHDL_FILE src/clk_gene.vhd
+set_global_assignment -name VHDL_FILE src/alu.vhd
+set_global_assignment -name VHDL_FILE src/adr_count.vhd
+set_global_assignment -name VHDL_FILE src/ayme0120.vhd
+set_global_assignment -name VHDL_FILE src/extensions.vhd
+set_global_assignment -name VHDL_FILE src/extensions_test.vhd
+set_location_assignment PIN_29 -to AD_BUS[7]
+set_location_assignment PIN_32 -to AD_BUS[6]
+set_location_assignment PIN_38 -to AD_BUS[5]
+set_location_assignment PIN_60 -to AD_BUS[4]
+set_location_assignment PIN_62 -to AD_BUS[3]
+set_location_assignment PIN_111 -to AD_BUS[2]
+set_location_assignment PIN_113 -to AD_BUS[1]
+set_location_assignment PIN_118 -to AD_BUS[0]
+set_location_assignment PIN_28 -to EN_EX
+set_location_assignment PIN_30 -to AD_DT
+set_location_assignment PIN_33 -to RD_WR
+set_location_assignment PIN_27 -to ADR8
+set_global_assignment -name COMMAND_MACRO_FILE simulation/modelsim/sim.do
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to FREQ_SEL[3]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to FREQ_SEL[2]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to FREQ_SEL[1]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to FREQ_SEL[0]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to FREQ_SEL
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF[7]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF[6]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF[5]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF[4]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF[3]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF[2]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF[1]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF[0]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to IBUF_STB
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to REQ_STB_IN
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[18]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[10]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[9]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[8]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[7]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[6]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[5]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[4]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[3]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[2]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[1]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[0]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to SW_IN[11]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_BUS[7]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_BUS[6]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_BUS[5]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_BUS[4]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_BUS[3]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_BUS[2]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_BUS[1]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_BUS[0]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_BUS
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to AD_DT
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_BUS[7]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_BUS[6]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_BUS[5]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_BUS[4]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_BUS[3]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_BUS[2]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_BUS[1]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_BUS[0]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_BUS
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to AD_DT
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to EN_EX
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to RD_WR
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to RD_WR
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to EN_EX
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to ADR8
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to ADR8
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
