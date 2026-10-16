@@ -21,7 +21,6 @@ port (
 	SYSCLK				: in std_logic;
 	XRESET				: in std_logic;
 	FREQ_SEL				: in std_logic_vector(3 downto 0);
---	OBUF_FLG_IN			: in std_logic;
 	IBUF_STB				: in std_logic;
 	REQ_STB_IN			: in std_logic;
 	IBUF					: in std_logic_vector(7 downto 0);
@@ -56,6 +55,7 @@ port(
 	CEN					: in std_logic;
 	DEMO					: in std_logic;
 	SP						: in std_logic;
+	SP_ACCEPT       : out std_logic;	
 	SI						: in std_logic;
 	SS						: in std_logic;
 	SET					: in std_logic;
@@ -65,7 +65,6 @@ port(
 	SW_DATA_WE			: in std_logic;
 	ADDR8_SW				: in std_logic;
 	DATA_SW				: in std_logic_vector(7 downto 0);
---	OBUF_FLG_IN			: in std_logic;
 	IBUF_STB				: in std_logic;
 	REQ_STB_IN			: in std_logic;
 	IBUF					: in std_logic_vector(7 downto 0);
@@ -77,7 +76,6 @@ port(
 	IBUFO					: out std_logic_vector(7 downto 0);
 	HALT					: out std_logic;
 	ENDPHASE				: out std_logic;
---	CLKEN_O				: out std_logic;
 	PC_CEN				: out std_logic;
 	ADDR8_O				: out std_logic;
 	PRG_CNT				: out std_logic_vector(7 downto 0);
@@ -106,7 +104,6 @@ component SYNCHRO
 port (
 	CLK				: in std_logic;
 	RESET				: in std_logic;
---	OBUF_FLG_IN		: in std_logic;
 	IBUF_STB			: in std_logic;
 	REQ_STB_IN		: in std_logic;
 	IBUF				: in std_logic_vector(7 downto 0);
@@ -121,7 +118,6 @@ port (
 	SEL_MAR			: out std_logic;
 	ADDR8_SW			: out std_logic;
 	SW_DATA_WE		: out std_logic;
---	OBUF_FLG_IN_S	: out std_logic;
 	IBUF_STB_S		: out std_logic;
 	REQ_STB_IN_S	: out std_logic;
 	IBUF_S			: out std_logic_vector(7 downto 0)
@@ -133,7 +129,7 @@ component EXE_CTRL
 port (
 	CLK		: in std_logic;
 	RESET		: in std_logic;
-	CLKEN		: in std_logic;
+	SP_ACCEPT	: in std_logic;	
 	HALT		: in std_logic;
 	ENDPHASE	: in std_logic;
 	EXE		: in std_logic_vector(2 downto 0);
@@ -220,6 +216,7 @@ signal IBUF_S 				: std_logic_vector(7 downto 0);
 signal REQ_STB_IN_S 		: std_logic;
 signal FREQ_CHG 			: std_logic_vector(3 downto 0);
 signal PC_CEN				: std_logic;
+signal SP_ACCEPT_I : std_logic;
 signal EX_EN				: std_logic;
 signal EX_WR_RD			: std_logic;
 signal EX_ADR8				: std_logic;
@@ -236,6 +233,7 @@ begin
 			CEN => CEN, 
 			DEMO => DEMO,
 			SP => SP,
+			SP_ACCEPT => SP_ACCEPT_I,
 			SI => SI,
 			SS => SS,
 			SET => SET,
@@ -245,7 +243,6 @@ begin
 			SW_DATA_WE => SW_DATA_WE,
 			DATA_SW => DATA_SW,
 			ADDR8_SW => ADDR8_SW,
---			OBUF_FLG_IN => OBUF_FLG_IN_S,
 			IBUF_STB => IBUF_STB_S,
 			REQ_STB_IN => REQ_STB_IN_S,
 			IBUF => IBUF_S,
@@ -257,7 +254,6 @@ begin
 			IBUFO => IBUFO,
 			HALT => HALT,
 			ENDPHASE => ENDPHASE,
---			CLKEN_O => CLKEN_O,
 			PC_CEN => PC_CEN,
 			ADDR8_O => ADDR8,
 			PRG_CNT => PRG_CNT,
@@ -299,7 +295,6 @@ begin
 			SEL_MAR => SEL_MAR, 
 			ADDR8_SW => ADDR8_SW,
 			SW_DATA_WE => SW_DATA_WE,
---			OBUF_FLG_IN_S => OBUF_FLG_IN_S,
 			IBUF_STB_S => IBUF_STB_S,
 			REQ_STB_IN_S => REQ_STB_IN_S,
 			IBUF_S => IBUF_S
@@ -309,7 +304,7 @@ begin
 	k3: EXE_CTRL port map(
 			CLK => SYSCLK, 
 			RESET => RESET, 
-			CLKEN => PC_CEN, 
+			SP_ACCEPT => SP_ACCEPT_I,
 			HALT => HALT, 
 			ENDPHASE => ENDPHASE,
 			EXE => EXE, 

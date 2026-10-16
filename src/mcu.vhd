@@ -1,3 +1,4 @@
+-- SP phase handshake fix, 2026-10-13; base be0d30e.
 --========================================================
 --  Project   : AYME0100
 --  Outline   : 教育用8ビットマイコン(kue-chip2)FPGA
@@ -27,6 +28,7 @@ port(
 	CEN					: in std_logic;
 	DEMO					: in std_logic;
 	SP						: in std_logic;
+	SP_ACCEPT       : out std_logic;
 	SI						: in std_logic;
 	SS						: in std_logic;
 	SET					: in std_logic;
@@ -36,7 +38,6 @@ port(
 	SW_DATA_WE			: in std_logic;
 	ADDR8_SW				: in std_logic;
 	DATA_SW				: in std_logic_vector(7 downto 0);
---	OBUF_FLG_IN			: in std_logic;
 	IBUF_STB				: in std_logic;
 	REQ_STB_IN			: in std_logic;
 	IBUF					: in std_logic_vector(7 downto 0);
@@ -48,7 +49,6 @@ port(
 	IBUFO					: out std_logic_vector(7 downto 0);
 	HALT					: out std_logic;
 	ENDPHASE				: out std_logic;
---	CLKEN_O				: out std_logic;
 	PC_CEN				: out std_logic;
 	ADDR8_O				: out std_logic;
 	PRG_CNT				: out std_logic_vector(7 downto 0);
@@ -86,7 +86,6 @@ signal OBUF_EN 		: std_logic;
 signal IX_SEL 			: std_logic;
 signal MAR_EN			: std_logic;
 
---signal memre 			: std_logic;
 signal MEMWE 			: std_logic;
 signal ADDR8 			: std_logic;
 
@@ -134,7 +133,6 @@ signal VF_SHFT			: std_logic;
 signal NF_SHFT			: std_logic;
 signal ZF_SHFT 		: std_logic;
 signal RAM_WE 			: std_logic;
---signal ADDR8_mem 		: std_logic;
 signal OBUF_FLG_O 	: std_logic;
 signal OBUF_FLG_SET 	: std_logic;
 signal I_IBUFO 		: std_logic_vector(7 downto 0);
@@ -167,6 +165,7 @@ port(
 	SYSCLK			: in std_logic;
 	CLKEN				: in std_logic;
 	SP					: in std_logic;
+	SP_ACCEPT       : out std_logic;
 	SI					: in std_logic;
 	SS					: in std_logic;
 	CRRY_FLG			: in std_logic;
@@ -180,7 +179,6 @@ port(
 	OP_CODE			: in std_logic_vector(3 downto 0);
 	CC					: in std_logic_vector(3 downto 0);
 	DBI				: in std_logic_vector(7 downto 0);
---	mar_en			: out std_logic;
 	IR_EN				: out std_logic;
 	IX_EN				: out std_logic;
 	ACC_EN			: out std_logic;
@@ -188,7 +186,6 @@ port(
 	OBUF_EN			: out std_logic;
 	IBUF_EN			: out std_logic;
 	HALT				: out std_logic;
---	memre				: out std_logic;
 	MEMWE				: out std_logic;
 	ENDPHASE			: out std_logic;
 	RCF				: out std_logic;
@@ -236,7 +233,6 @@ component FETCH
 port(
 	SYSCLK	: in std_logic;
 	RESET		: in std_logic;
---	memre		: in std_logic;
 	ADR		: in std_logic_vector(7 downto 0);
 	D_OUT		: out std_logic_vector(7 downto 0)
 );
@@ -401,7 +397,7 @@ begin
 		RESET => RESET, 
 		FREQ_SEL => FREQ_SEL, 
 		CEN => CEN, 
-		CLK_EN =>CLKEN, 
+		CLK_EN => CLKEN, 
 		DIGIT_SEL => DIGIT_SEL
 		);
 
@@ -410,7 +406,8 @@ begin
 		RESET => RESET, 
 		SYSCLK => SYSCLK, 
 		CLKEN => CLKEN, 
-		SP => SP, 
+		SP => SP,
+		SP_ACCEPT => SP_ACCEPT, 
 		SI => SI, 
 		SS => SS,
 		CRRY_FLG => CFOUT, 
@@ -424,7 +421,6 @@ begin
 		OP_CODE => OP_CODE, 
 		CC => CC,
 		DBI => DBI, 
---		mar_EN => mar_EN, 
 		IR_EN => IR_EN, 
 		IX_EN => IX_EN,
 		ACC_EN => ACC_EN, 
@@ -432,7 +428,6 @@ begin
 		OBUF_EN => OBUF_EN, 
 		IBUF_EN => IBUF_EN,
 		HALT => HALT, 
---		memre => memre,
 		MEMWE => MEMWE, 
 		ENDPHASE => ENDPHASE, 
 		RCF => RCF, 
@@ -442,7 +437,6 @@ begin
 		ROT_EN => ROT_EN, 
 		OBUF_FLG_SET => OBUF_FLG_SET,
 		IBUF_FLG_CLR => IBUF_FLG_CLR, 
---		OBUF_FLG_CLR => OBUF_FLG_CLR,
 		SEL_ALU => SEL_ALU, 
 		EXE_ALU => EXE_ALU, 
 		PC => PC, 
@@ -476,7 +470,6 @@ begin
 	u4: FETCH port map(
 		SYSCLK => SYSCLK, 
 		RESET => RESET, 
---		memre => memre, 
 		ADR => ADR, 
 		D_OUT => FETCH_O
 		);

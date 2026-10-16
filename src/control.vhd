@@ -1,3 +1,4 @@
+-- SP phase handshake fix, 2026-10-13; base be0d30e.
 --========================================================
 --  Project   : AYME0100
 --  Outline   : 教育用8ビットマイコン(kue-chip2)FPGA
@@ -22,6 +23,7 @@ port(
 	SYSCLK			: in std_logic;
 	CLKEN				: in std_logic;
 	SP					: in std_logic;
+	SP_ACCEPT       : out std_logic;
 	SI					: in std_logic;
 	SS					: in std_logic;
 	CRRY_FLG			: in std_logic;
@@ -35,7 +37,6 @@ port(
 	OP_CODE			: in std_logic_vector(3 downto 0);
 	CC					: in std_logic_vector(3 downto 0);
 	DBI				: in std_logic_vector(7 downto 0);
---	MAR_EN			: out std_logic;
 	IR_EN				: out std_logic;
 	IX_EN				: out std_logic;
 	ACC_EN			: out std_logic;
@@ -43,7 +44,6 @@ port(
 	OBUF_EN			: out std_logic;
 	IBUF_EN			: out std_logic;
 	HALT				: out std_logic;
---	memre				: out std_logic;
 	MEMWE				: out std_logic;
 	ENDPHASE			: out std_logic;
 	RCF				: out std_logic;
@@ -53,11 +53,10 @@ port(
 	ROT_EN			: out std_logic;
 	OBUF_FLG_SET	: out std_logic;
 	IBUF_FLG_CLR	: out std_logic;
---	OBUF_FLG_CLR	: out std_logic;
 	SEL_ALU			: out std_logic;
 	EXE_ALU			: out std_logic;
 	PC					: out std_logic_vector(7 downto 0);
-	ADR_EN			: out std_logic;--_vector(2 downto 0);
+	ADR_EN			: out std_logic;
 	MEM_PC			: out std_logic;
 	PHASE_LED		: out std_logic_vector(4 downto 0);
 	OP_LED			: out std_logic;
@@ -75,9 +74,9 @@ signal HLT				: std_logic;
 signal PHASECUT		: std_logic;
 signal PC_LATCH_EN	: std_logic;
 signal DELAY			: std_logic;
---signal CK_P				: std_logic_vector(4 downto 0);
-signal DFF				: std_logic_vector(1 downto 0);
---signal PC_CEN			: std_logic;
+signal DFF				: std_logic_vector(2 downto 0);
+signal PHASE_RUN    : std_logic;
+signal ACCEPT_I     : std_logic;
 signal MAR_EN			: std_logic;
 signal PC_CEN_i		: std_logic;
 
@@ -89,19 +88,27 @@ begin
 	-----------------
 	-- State machine
 	-----------------
-	process(CLKEN,RESET) begin
-		if (RESET = '1') then
-			PRESENT_PHASE <= IDLE;
-		elsif (CLKEN'event and CLKEN = '1') then
-			if ((SS = '1') or (SI = '1') or (SP = '1')) then
-				PRESENT_PHASE <= NEXT_PHASE;
-			else
-				PRESENT_PHASE <= PRESENT_PHASE;
-			end if;
-		end if;
-	end process;
-	
-	process(PRESENT_PHASE, NEXT_PHASE, PHASECUT, HLT) begin
+    -- CLKEN is a SYSCLK-domain enable, never a clock.
+    -- Keep the accepted grant through the delayed PC/MAR update.
+    ACCEPT_I <= CLKEN and (SP or SI or SS);
+    SP_ACCEPT <= CLKEN and SP;
+
+    process(SYSCLK, RESET)
+    begin
+        if RESET = '1' then
+            PRESENT_PHASE <= IDLE;
+            PHASE_RUN <= '0';
+        elsif rising_edge(SYSCLK) then
+            if CLKEN = '1' then
+                PHASE_RUN <= ACCEPT_I;
+                if ACCEPT_I = '1' then
+                    PRESENT_PHASE <= NEXT_PHASE;
+                end if;
+            end if;
+        end if;
+    end process;
+
+	process(PRESENT_PHASE, PHASECUT, HLT) begin
 		case PRESENT_PHASE is
 			when IDLE =>
 				NEXT_PHASE <= P0;
@@ -150,11 +157,9 @@ begin
 			RCF <= '0';
 			SCF <= '0';
 			PHASECUT <= '0';
---			memre <= '0';
 			SHFT_EN <= '0';
 			ROT_EN <= '0';
 			SEL_ALU <= '1';
---			CK_P <= "00000";
 			MEM_PC <= '0';
 			EXE_ALU <= '0';
 			PC_EN <= '0';
@@ -162,11 +167,9 @@ begin
 			ADDR8 <= '0';
 			OBUF_FLG_SET <= '0';
 			IBUF_FLG_CLR <= '0';
---			OBUF_FLG_CLR <= '1';
 			
 		elsif (SYSCLK'event and SYSCLK = '1') then
 				if (PRESENT_PHASE = P0) then
---					CK_P <= "00001";
 					MAR_EN <= '1';
 					PHASECUT <= '0';
 					FLG_EN <= '0';
@@ -176,7 +179,6 @@ begin
 					IX_EN <= '0';
 					SEL_ALU <= '1';
 					ADDR8 <= '0';
---					memre <= '0';
 					EXE_ALU <= '0';
 					PC_EN <= '0';
 					SHFT_EN <= '0';
@@ -186,14 +188,11 @@ begin
 					HLT <= '0';
 					OBUF_FLG_SET <= '0';
 					IBUF_FLG_CLR <= '0';
---					OBUF_FLG_CLR <= '1';
 				end if;
 				
 				
 				if (PRESENT_PHASE = P1) then
---					CK_P <= "00010";
 					MAR_EN <= '0';
---					memre <= '1';
 					IR_EN <= '1';
 					case OP_CODE is
 						when "0110" =>
@@ -257,9 +256,7 @@ begin
 				
 				
 				if (PRESENT_PHASE = P2) then
---					CK_P <= "00100";
 					IR_EN <= '0';
---					memre <= '0';
 					case OP_CODE is
 						when "0000" =>
 							if (IX_ACC = '0') then		-- NOP
@@ -287,7 +284,6 @@ begin
 							
 						when "0011" =>						-- Bcc
 							MAR_EN <= '1';
---							MEM_PC <= '1';
 							
 						when "0100" =>
 							if (ADR_MODE(2) = '0') then	-- shft
@@ -382,7 +378,6 @@ begin
 									IX_EN <= '1';
 								end if;
 								PHASECUT <= '1';
---							elsif (ADR_MODE > "011") then
 							else
 								MAR_EN <= '1';
 								MEM_PC <= '1';
@@ -399,7 +394,6 @@ begin
 									IX_EN <= '1';
 								end if;
 								PHASECUT <= '1';
---							elsif (ADR_MODE > "011") then
 							else
 								MAR_EN <= '1';
 								MEM_PC <= '1';
@@ -417,7 +411,6 @@ begin
 									IX_EN <= '1';
 								end if;
 								PHASECUT <= '1';
---							elsif (ADR_MODE > "011") then
 							else
 								MAR_EN <= '1';
 								MEM_PC <= '1';
@@ -434,7 +427,6 @@ begin
 									IX_EN <= '1';
 								end if;
 								PHASECUT <= '1';
---							elsif (ADR_MODE > "011") then
 							else
 								MAR_EN <= '1';
 								MEM_PC <= '1';
@@ -451,7 +443,6 @@ begin
 									IX_EN <= '1';
 								end if;
 								PHASECUT <= '1';
---							elsif (ADR_MODE > "011") then
 							else
 								MAR_EN <= '1';
 								MEM_PC <= '1';
@@ -462,17 +453,7 @@ begin
 								EXE_ALU <= '1';
 								SEL_ALU <= '0';
 								FLG_EN <= '1';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
 								PHASECUT <= '1';
---							elsif (ADR_MODE = "010" or ADR_MODE = "011") then
---								SEL_ALU <= '1';
---								EXE_ALU <= '1';
---								MEM_PC <= '1';
---							elsif (ADR_MODE > "011") then
 							else
 								MAR_EN <= '1';
 								MEM_PC <= '1';
@@ -485,7 +466,6 @@ begin
 					
 					
 				if (PRESENT_PHASE = P3) then
---					CK_P <= "01000";
 					MEM_PC <= '0';
 					case OP_CODE is
 						when "0001" =>
@@ -494,7 +474,6 @@ begin
 								OBUF_EN <= '0';
 								SEL_ALU <= '1';
 							else												-- IN
---								IBUF_FLGi <= '0';
 								IBUF_FLG_CLR <= '1';
 								ACC_EN <= '0';
 								IBUF_EN <= '0';
@@ -503,98 +482,81 @@ begin
 							
 						when "0011" =>										-- Bcc
 							MAR_EN <= '0';
---							MEM_PC <= '0';
 							if (cc = "0000") then							-- Always(A)
---								memre <= '1';
 								PC_EN <= '1';
 								MEM_PC <= '1';
 							elsif (cc = "1000") then						-- on oVer Flow(VF)
 								if (OV_FLG = '1') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "0001") then						-- on Not Zero(NZ)
 								if (ZERO_FLG = '0') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "1001") then						-- on Zero(Z)
 								if (ZERO_FLG = '1') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "0010") then						-- on Zero or Positive(ZP)
 								if (NEG_FLG = '0') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "1010") then						-- on Negative(N)
 								if (NEG_FLG = '1') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "0011") then						-- on Positive(P)
 								if ((NEG_FLG or ZERO_FLG) = '0') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "1011") then						-- on Zero or Negative(ZN)
 								if((NEG_FLG or ZERO_FLG) = '1') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "0100") then						-- on No Input
 								if (IBUF_FLG = '0') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "1100") then						-- on No Output
 								if (OBUF_FLG_O = '1') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "0101") then						-- on No Carry
 								if (CRRY_FLG = '0') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "1101") then						-- on Carry
 								if (CRRY_FLG = '1') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "0110") then						-- on Greater than or Equal
 								if ((OV_FLG xor NEG_FLG) = '0') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "1110") then						-- on LeSS than
 								if ((OV_FLG xor NEG_FLG) = '1') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "0111") then						-- on Greater than
 								if (((OV_FLG xor NEG_FLG) or ZERO_FLG) = '0') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
 							elsif (cc = "1111") then						-- on LeSS than or Equal
 								if (((OV_FLG xor NEG_FLG) or ZERO_FLG) = '1') then
---									memre <= '1';
 									PC_EN <= '1';
 									MEM_PC <= '1';
 								end if;
@@ -602,22 +564,15 @@ begin
 							PHASECUT <= '1';
 							
 						when "0100" =>										-- shft/ROTATE
---							SHFT_EN <= '0';
---							ROT_EN <= '0';
 							FLG_EN <= '1';
 							PHASECUT <= '1';
 							
 						when "0110" =>										-- LD
---							memre <= '1';
 							MEM_PC <= '0';
---							EXE_ALU <= '1';
---							PHASECUT <= '1';
 							if (ADR_MODE = "000" or ADR_MODE = "001") then
 								SEL_ALU <= '1';
 							elsif (ADR_MODE = "010" or ADR_MODE = "011") then
---								memre <= '1';
 								MAR_EN <= '0';
---								SEL_ALU <= '1';
 								PHASECUT <= '1';
 								if (IX_ACC = '0') then
 									ACC_EN <= '1';
@@ -625,51 +580,22 @@ begin
 									IX_EN <= '1';
 								end if;
 							elsif (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
---								memre <= '1';
---								MAR_EN <= '1';
 								EXE_ALU <= '0';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
 								EXE_ALU <= '0';
---								SEL_ALU <= '1';
 							end if;
 							
 						when "0111" =>										-- ST
---							MAR_EN <= '0';
 							MEM_PC <= '0';
---							EXE_ALU <= '1';
 							if (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
---								memre <= '1';
---								MAR_EN <= '1';
 								SEL_ALU <= '1';
 								EXE_ALU <= '0';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
 								EXE_ALU <= '0';
---								SEL_ALU <= '1';
 							end if;
 							
 						-- SBC, ADC, SUB, ADD
@@ -678,35 +604,19 @@ begin
 							if (ADR_MODE = "000" or ADR_MODE = "001") then
 								SEL_ALU <= '0';
 							elsif (ADR_MODE = "010" or ADR_MODE = "011") then
---								memre <= '1';
 								MAR_EN <= '0';
 								FLG_EN <= '1';
 								PHASECUT <= '1';
 								EXE_ALU <= '1';
---								SEL_ALU <= '1';
 								if (IX_ACC = '0') then
 									ACC_EN <= '1';
 								else
 									IX_EN <= '1';
 								end if;
 							elsif (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							end if;
 							
 						when "1001" =>
@@ -714,35 +624,19 @@ begin
 							if (ADR_MODE = "000" or ADR_MODE = "001") then
 								SEL_ALU <= '0';
 							elsif (ADR_MODE = "010" or ADR_MODE = "011") then
---								memre <= '1';
 								MAR_EN <= '0';
 								FLG_EN <= '1';
 								PHASECUT <= '1';
 								EXE_ALU <= '1';
---								SEL_ALU <= '1';
 								if (IX_ACC = '0') then
 									ACC_EN <= '1';
 								else
 									IX_EN <= '1';
 								end if;
 							elsif (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
-----								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							end if;
 							
 						when "1010" =>
@@ -750,35 +644,19 @@ begin
 							if (ADR_MODE = "000" or ADR_MODE = "001") then
 								SEL_ALU <= '0';
 							elsif (ADR_MODE = "010" or ADR_MODE = "011") then
---								memre <= '1';
 								MAR_EN <= '0';
 								FLG_EN <= '1';
 								PHASECUT <= '1';
 								EXE_ALU <= '1';
---								SEL_ALU <= '1';
 								if (IX_ACC = '0') then
 									ACC_EN <= '1';
 								else
 									IX_EN <= '1';
 								end if;
 							elsif (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							end if;
 							
 						when "1011" =>
@@ -786,172 +664,87 @@ begin
 							if (ADR_MODE = "000" or ADR_MODE = "001") then
 								SEL_ALU <= '0';
 							elsif (ADR_MODE = "010" or ADR_MODE = "011") then
---								memre <= '1';
 								MAR_EN <= '0';
 								FLG_EN <= '1';
 								PHASECUT <= '1';
 								EXE_ALU <= '1';
---								SEL_ALU <= '1';
 								if (IX_ACC = '0') then
 									ACC_EN <= '1';
 								else
 									IX_EN <= '1';
 								end if;
 							elsif (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							end if;
 							
 						-- EOR, OR, AND, CMP	
 						when "1100" =>
 							EXE_ALU <= '1';
 							if (ADR_MODE = "010" or ADR_MODE = "011") then
---								memre <= '1';
 								MAR_EN <= '0';
 								FLG_EN <= '1';
 								PHASECUT <= '1';
 								EXE_ALU <= '1';
---								SEL_ALU <= '1';
 								if (IX_ACC = '0') then
 									ACC_EN <= '1';
 								else
 									IX_EN <= '1';
 								end if;
 							elsif (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							end if;
 							
 						when "1101" =>
 							EXE_ALU <= '1';
 							if (ADR_MODE = "010" or ADR_MODE = "011") then
---								memre <= '1';
 								MAR_EN <= '0';
 								FLG_EN <= '1';
 								PHASECUT <= '1';
 								EXE_ALU <= '1';
---								SEL_ALU <= '1';
 								if (IX_ACC = '0') then
 									ACC_EN <= '1';
 								else
 									IX_EN <= '1';
 								end if;
 							elsif (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							end if;
 							
 						when "1110" =>
 							EXE_ALU <= '1';
 							if (ADR_MODE = "010" or ADR_MODE = "011") then
---								memre <= '1';
 								MAR_EN <= '0';
 								FLG_EN <= '1';
 								PHASECUT <= '1';
 								EXE_ALU <= '1';
---								SEL_ALU <= '1';
 								if (IX_ACC = '0') then
 									ACC_EN <= '1';
 								else
 									IX_EN <= '1';
 								end if;
 							elsif (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							end if;
 							
 						when "1111" =>
 							EXE_ALU <= '1';
 							if (ADR_MODE = "010" or ADR_MODE = "011") then
---								memre <= '1';
 								MAR_EN <= '0';
 								FLG_EN <= '1';
 								PHASECUT <= '1';
 								EXE_ALU <= '1';
---								SEL_ALU <= '1';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
 							elsif (ADR_MODE = "100") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "101") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "110") then
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							elsif (ADR_MODE = "111") then
---								ADDR8 <= '1';
---								memre <= '1';
---								MAR_EN <= '1';
---								SEL_ALU <= '1';
 							end if;
 							
 						when others =>
@@ -961,7 +754,6 @@ begin
 					
 					
 				if (PRESENT_PHASE = P4) then
---					CK_P <= "10000";
 					PHASECUT <= '1';
 					case OP_CODE is
 						when "0110" =>							-- LD
@@ -977,17 +769,6 @@ begin
 							elsif (ADR_MODE = "100" or ADR_MODE = "110") then
 								ADDR8 <= '0';
 							end if;
---							if (ADR_MODE >= "100") then
---								memre <= '1';
-----								MAR_EN <= '0';
---								EXE_ALU <= '0';
-----								ADDR8 <= '0';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
---							end if;
 							
 						when "0111" =>							-- ST
 							MEMWE <= '1';
@@ -1000,7 +781,6 @@ begin
 						
 						-- SBC, ADC, SUB, ADD
 						when "1000" =>												-- SBC
---							memre <= '1';
 							FLG_EN <= '1';
 							MAR_EN <= '0';
 							EXE_ALU <= '1';
@@ -1014,20 +794,8 @@ begin
 							elsif (ADR_MODE = "101" or ADR_MODE = "111") then
 								ADDR8 <= '1';
 							end if;
---							if (ADR_MODE >= "100") then
---								memre <= '1';
---								FLG_EN <= '1';
-----								MAR_EN <= '0';
---								EXE_ALU <= '1';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
---							end if;
 							
 						when "1001" =>												-- ADC
---							memre <= '1';
 							FLG_EN <= '1';
 							MAR_EN <= '0';
 							EXE_ALU <= '1';
@@ -1041,20 +809,8 @@ begin
 							elsif (ADR_MODE = "101" or ADR_MODE = "111") then
 								ADDR8 <= '1';
 							end if;
---							if (ADR_MODE >= "100") then
---								memre <= '1';
---								FLG_EN <= '1';
-----								MAR_EN <= '0';
---								EXE_ALU <= '1';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
---							end if;
 							
 						when "1010" =>												-- SUB
---							memre <= '1';
 							FLG_EN <= '1';
 							MAR_EN <= '0';
 							EXE_ALU <= '1';
@@ -1068,20 +824,8 @@ begin
 							elsif (ADR_MODE = "101" or ADR_MODE = "111") then
 								ADDR8 <= '1';
 							end if;
---							if (ADR_MODE >= "100") then
---								memre <= '1';
---								FLG_EN <= '1';
-----								MAR_EN <= '0';
---								EXE_ALU <= '1';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
---							end if;
 							
 						when "1011" =>												-- ADD
---							memre <= '1';
 							FLG_EN <= '1';
 							MAR_EN <= '0';
 							EXE_ALU <= '1';
@@ -1095,21 +839,9 @@ begin
 							elsif (ADR_MODE = "101" or ADR_MODE = "111") then
 								ADDR8 <= '1';
 							end if;
---							if (ADR_MODE >= "100") then
---								memre <= '1';
---								FLG_EN <= '1';
-----								MAR_EN <= '0';
---								EXE_ALU <= '1';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
---							end if;
 							
 						-- EOR, OR, AND, CMP
 						when "1100" =>												-- EOR
---							memre <= '1';
 							FLG_EN <= '1';
 							MAR_EN <= '0';
 							EXE_ALU <= '1';
@@ -1123,20 +855,8 @@ begin
 							elsif (ADR_MODE = "101" or ADR_MODE = "111") then
 								ADDR8 <= '1';
 							end if;
---							if (ADR_MODE >= "100") then
---								memre <= '1';
---								FLG_EN <= '1';
-----								MAR_EN <= '0';
---								EXE_ALU <= '1';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
---							end if;
 							
 						when "1101" =>												-- OR
---							memre <= '1';
 							FLG_EN <= '1';
 							MAR_EN <= '0';
 							EXE_ALU <= '1';
@@ -1150,20 +870,8 @@ begin
 							elsif (ADR_MODE = "101" or ADR_MODE = "111") then
 								ADDR8 <= '1';
 							end if;
---							if (ADR_MODE >= "100") then
---								memre <= '1';
---								FLG_EN <= '1';
-----								MAR_EN <= '0';
---								EXE_ALU <= '1';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
---							end if;
 							
 						when "1110" =>												-- AND
---							memre <= '1';
 							FLG_EN <= '1';
 							MAR_EN <= '0';
 							EXE_ALU <= '1';
@@ -1177,20 +885,8 @@ begin
 							elsif (ADR_MODE = "101" or ADR_MODE = "111") then
 								ADDR8 <= '1';
 							end if;
---							if (ADR_MODE >= "100") then
---								memre <= '1';
---								FLG_EN <= '1';
-----								MAR_EN <= '0';
---								EXE_ALU <= '1';
---								if (IX_ACC = '0') then
---									ACC_EN <= '1';
---								else
---									IX_EN <= '1';
---								end if;
---							end if;
 							
 						when "1111" =>												-- CMP
---							memre <= '1';
 							FLG_EN <= '1';
 							MAR_EN <= '0';
 							EXE_ALU <= '1';
@@ -1199,36 +895,32 @@ begin
 							elsif (ADR_MODE = "101" or ADR_MODE = "111") then
 								ADDR8 <= '1';
 							end if;
---							if (ADR_MODE >= "100") then
---								memre <= '1';
---								FLG_EN <= '1';
-----								MAR_EN <= '0';
---								EXE_ALU <= '1';
---							end if;
 							
 						when others =>
 							null;
 					end case;
 				end if;
---			end if;
 		end if;
 	end process;
 	
 	ENDPHASE <= PHASECUT;
 	HALT <= HLT;
---	obuf_flg <= obuf_flgi;
 	
-	process(SYSCLK, RESET) begin
-		if (SYSCLK'event and SYSCLK='1') then
---			DFF(2 downto 0) <= CK_P(3 downto 2) & CK_P(0);
-			DFF(1 downto 0) <= DFF(0) & CLKEN;
-		end if;
-	end process;
-	
-	ADR_EN <= MAR_EN and PC_CEN_i and (SP or SI or SS);--not DFF(2 downto 0) and CK_P(3 downto 2) & CK_P(0);
-	PC_CEN_i <= DFF(1);
-	PC_CEN <= PC_CEN_i;
-	
+    -- One extra stage preserves phase-to-PC/MAR timing after
+    -- moving phase advancement onto the following SYSCLK edge.
+    process(SYSCLK, RESET)
+    begin
+        if RESET = '1' then
+            DFF <= "000";
+        elsif rising_edge(SYSCLK) then
+            DFF <= DFF(1 downto 0) & CLKEN;
+        end if;
+    end process;
+
+    ADR_EN <= MAR_EN and PC_CEN_i and PHASE_RUN;
+    PC_CEN_i <= DFF(2);
+    PC_CEN <= PC_CEN_i;
+
 	process(SYSCLK, RESET) begin
 		if (RESET = '1') then
 			DELAY <= '0';
@@ -1251,114 +943,13 @@ begin
 				PC_COUNT <= DBI;
 			end if;
 			
-			if ((PC_CEN_i = '1') and ((SS = '1') or (SI = '1') or (SP = '1'))) then
---			if ((CLKEN = '1') and ((SS = '1') or (SI = '1') or (SP = '1'))) then
---				if (PC_EN = '1') then
---					PC_COUNT <= DBI;
---				end if;
-				
+			if ((PC_CEN_i = '1') and (PHASE_RUN = '1')) then
 				if (PRESENT_PHASE = P0) then
 					if (OP_CODE = "0011") then							-- Bcc
 						PC_COUNT <= PC_COUNT + 1;
---						if (cc = "0000") then							-- Always(A)
---							PC_COUNT <= PC_COUNT;
---						elsif (cc = "1000") then						-- on oVer Flow(VF)
---							if (OV_FLG = '1') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "0001") then						-- on Not Zero(NZ)
---							if (ZERO_FLG = '0') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "1001") then						-- on Zero(Z)
---							if (ZERO_FLG = '1') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "0010") then						-- on Zero or Positive(ZP)
---							if (NEG_FLG = '0') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "1010") then						-- on Negative(N)
---							if (NEG_FLG = '1') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "0011") then						-- on Positive(P)
---							PC_COUNT <= PC_COUNT + 1;
-----							if ((NEG_FLG or ZERO_FLG) = '0') then
-----								PC_COUNT <= PC_COUNT;
-----							else
-----								PC_COUNT <= PC_COUNT + 1;
-----							end if;
---						elsif (cc = "1011") then						-- on Zero or Negative(ZN)
---							if((NEG_FLG or ZERO_FLG) = '1') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "0100") then						-- on No Input
---							if (IBUF_FLG = '0') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "1100") then						-- on No Output
---							if (obuf_flg_o = '1') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "0101") then						-- on No Carry
---							if (CRRY_FLG = '0') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "1101") then						-- on Carry
---							if (CRRY_FLG = '1') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "0110") then						-- on Greater than or Equal
---							if ((OV_FLG xor NEG_FLG) = '0') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "1110") then						-- on LeSS than
---							if ((OV_FLG xor NEG_FLG) = '1') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "0111") then						-- on Greater than
---							if (((OV_FLG xor NEG_FLG) or ZERO_FLG) = '0') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						elsif (cc = "1111") then						-- on LeSS than or Equal
---							if (((OV_FLG xor NEG_FLG) or ZERO_FLG) = '1') then
---								PC_COUNT <= PC_COUNT;
---							else
---								PC_COUNT <= PC_COUNT + 1;
---							end if;
---						end if;
 					else
 						PC_COUNT <= PC_COUNT + 1;	
 					end if;
-
-					
 				elsif (PRESENT_PHASE = P2) then
 					case OP_CODE is
 						when "0011" =>						-- Branch
@@ -1451,6 +1042,5 @@ begin
 	end process;
 			
 	PC <= PC_COUNT;
---	PHASE_LED <= CK_P;
 	
 end rtl;

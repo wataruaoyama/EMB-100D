@@ -35,9 +35,7 @@ signal CLK_O				: std_logic;
 signal DFF					: std_logic;
 signal COUNT32				: std_logic_vector(31 downto 0);
 signal SET_VALUE 			: std_logic_vector(31 downto 0);
---signal DISPLAY_COUNTER 	: std_logic_vector(11 downto 0) := "000000000000";
 signal DISPLAY_COUNTER 	: std_logic_vector(14 downto 0) := "000000000000000";
---signal DISPLAY_COUNTER 	: std_logic_vector(18 downto 0) := "0000000000000000000";
 signal DIGI_ADR1 			: std_logic := '0';
 signal DIGI_ADR2 			: std_logic := '0';
 signal DIGI_ADR3 			: std_logic := '0';
@@ -101,7 +99,6 @@ begin
 				SET_VALUE <= x"FFFFFFFF" - x"055D4A7F";	-- 1/90000000 = 0.33Hz
 			when "1111" =>
 				SET_VALUE <= x"FFFFFFFF" - x"11E1A2FF";	-- 1/300000000 = 0.1Hz
---				SET_VALUE <= "11111111111111111111111111111" - "10001111000011010001011111111";
 			when others =>
 				SET_VALUE <= x"FFFFFFFF" - x"FFFFFFFF";
 		end case;
@@ -125,72 +122,25 @@ begin
 		process(SYSCLK) begin
 			if (SYSCLK'event and SYSCLK='1') then
 				DISPLAY_COUNTER <= DISPLAY_COUNTER + 1;
---				if (DISPLAY_COUNTER = "000000000001") then
 				if (DISPLAY_COUNTER = "000000000000001") then
---				if (DISPLAY_COUNTER = "0000000000000000001") then
 					DIGI_ADR3 <= '1';
---				elsif (DISPLAY_COUNTER = "001001011000") then	-- 0x258
 				elsif (DISPLAY_COUNTER = "001011101110110") then	-- 0x1776
---				elsif (DISPLAY_COUNTER = "0001110101001100000") then	-- 0x0EA60
 					DIGI_ADR3 <= '0';
 					DIGI_ADR2 <= '1';
---				elsif (DISPLAY_COUNTER = "010010110000") then	-- 0x4B0
 				elsif (DISPLAY_COUNTER = "010111011101100") then	-- 0x2EEC
---				elsif (DISPLAY_COUNTER = "0011101010011000000") then	-- 0x1D4C0
 					DIGI_ADR2 <= '0';
 					DIGI_ADR1 <= '1';
---				elsif (DISPLAY_COUNTER = "011100001000") then	-- 0x708
 				elsif (DISPLAY_COUNTER = "100011001100010") then	-- 0x4662
---				elsif (DISPLAY_COUNTER = "0101011111100100000") then	-- 0x2BF20
 					DIGI_ADR1 <= '0';
 					DIGI_DAT2 <= '1';
---				elsif (DISPLAY_COUNTER = "100101100000") then	-- 0x960
 				elsif (DISPLAY_COUNTER = "101110111011000") then	-- 0x5DD8
---				elsif (DISPLAY_COUNTER = "0111010100110000000") then	-- 0x3A980
 					DIGI_DAT2 <= '0';
 					DIGI_DAT1 <= '1';
---				elsif (DISPLAY_COUNTER = "101110111000") then	-- 0xBB8
 				elsif (DISPLAY_COUNTER = "111010101001110") then	-- 0x754E
---				elsif (DISPLAY_COUNTER = "1001001001111100000") then	-- 0x493E0
---					DISPLAY_COUNTER <= "000000000000";				
-					DISPLAY_COUNTER <= "000000000000000";				
---					DISPLAY_COUNTER <= "0000000000000000000";				
+					DISPLAY_COUNTER <= "000000000000000";							
 					DIGI_DAT1 <= '0';
 				end if;
 			end if;
---			if (SYSCLK'event and SYSCLK='1') then
---				DISPLAY_COUNTER <= DISPLAY_COUNTER + 1;
---				if (DISPLAY_COUNTER = "000000000000001") then
---					DIGI_ADR3 <= '1';
---				elsif (DISPLAY_COUNTER = "001011101110110") then	-- 0x1776
---					DIGI_ADR3 <= '0';
---					DIGI_ADR2 <= '0';
---				elsif (DISPLAY_COUNTER = "001011101111000") then	-- 0x1778
---					DIGI_ADR3 <= '0';
---					DIGI_ADR2 <= '1';
---				elsif (DISPLAY_COUNTER = "010111011101110") then	-- 0x2EEE
---					DIGI_ADR2 <= '0';
---					DIGI_ADR1 <= '0';
---				elsif (DISPLAY_COUNTER = "010111011110000") then	-- 0x2EF0
---					DIGI_ADR2 <= '0';
---					DIGI_ADR1 <= '1';
---				elsif (DISPLAY_COUNTER = "100011001100110") then	-- 0x4666
---					DIGI_ADR1 <= '0';
---					DIGI_DAT2 <= '0';
---				elsif (DISPLAY_COUNTER = "100011001101000") then	-- 0x4668
---					DIGI_ADR1 <= '0';
---					DIGI_DAT2 <= '1';
---				elsif (DISPLAY_COUNTER = "101110111011100") then	-- 0x5DDC
---					DIGI_DAT2 <= '0';
---					DIGI_DAT1 <= '0';
---				elsif (DISPLAY_COUNTER = "101110111011110") then	-- 0x5DDE
---					DIGI_DAT2 <= '0';
---					DIGI_DAT1 <= '1';
---				elsif (DISPLAY_COUNTER = "111010101010110") then	-- 0x7556
---					DISPLAY_COUNTER <= "000000000000000";				
---					DIGI_DAT1 <= '0';
---				end if;
---			end if;
 		end process;
 	end generate;
 	
